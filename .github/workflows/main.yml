@@ -1,0 +1,27 @@
+name: Auto Merge Pull Requests
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Auto-merge pull request
+      if: |
+        contains(github.event.pull_request.user.login, join([
+          'sksmagr23',
+          'Kaneki003',
+          'vivekmaurya001'
+        ]))
+      run: |
+        git config --global user.email "siddhantbr10@gmail.com"
+        git config --global user.name "Siddhant-Baranwal"
+        git checkout ${{ github.event.pull_request.head.ref }}
+        git merge origin/${{ github.event.pull_request.base.ref }}
+        git push origin ${{ github.event.pull_request.base.ref }}
