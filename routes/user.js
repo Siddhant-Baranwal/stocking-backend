@@ -1,0 +1,1 @@
+// Define routes for user, authentication and history.
