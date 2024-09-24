@@ -1,13 +1,15 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
+import dotenv from 'dotenv';
+dotenv.config();
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCof-tvVD_DaxBNPDamAqYJvFmnjYvhCtA",
-  authDomain: "company-analysis-5b938.firebaseapp.com",
-  projectId: "company-analysis-5b938",
-  storageBucket: "company-analysis-5b938.appspot.com",
-  messagingSenderId: "261790223359",
-  appId: "1:261790223359:web:733de825db9a85d18335ca",
-  measurementId: "G-09JPS9QKCF",
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTO_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
