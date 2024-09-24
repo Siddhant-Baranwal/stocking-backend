@@ -1,1 +1,1 @@
-// Return a component for error
+// Return a component for errors
