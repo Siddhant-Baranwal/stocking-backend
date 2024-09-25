@@ -3,6 +3,7 @@ import cors from "cors";
 const app = express();
 const PORT = 5000;
 import { authRoutes } from "./routes/authRoutes.js";
+import { userRoutes } from "./routes/user.js";
 app.use(
   cors({
       origin: [process.env.FRONTEND_URL],
@@ -12,6 +13,7 @@ app.use(
 );
 app.use(express.json());
 app.use("/api/auth", authRoutes);
+app.use("/user", userRoutes);
 
 app.get("/", function (req, res) {
   res.send("server is up and running");
