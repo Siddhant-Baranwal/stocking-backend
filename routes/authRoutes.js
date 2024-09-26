@@ -14,13 +14,13 @@ const router = express.Router();
 router.route("/signup").post(handleEmailSignUp);
 
 //Route 2: Handling the signIn using email and password
-router.get("/signin", handleEmailSignIn);
+router.post("/signin", handleEmailSignIn);
 
 //Route 3: Handling the email verification
-router.get("/isEmailVerified", isEmailVerified);
+router.post("/isEmailVerified", isEmailVerified);
 
 //Route 4: Resend the email verification
-router.get("/resendEmailVerification", handleResendVerification);
+router.post("/resendEmailVerification", handleResendVerification);
 
 //Route 5: Handling signIn ans signUp using Google
 router.get("/google/signin", signInWithGoogle);
