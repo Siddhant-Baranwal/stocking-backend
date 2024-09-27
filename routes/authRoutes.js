@@ -5,6 +5,8 @@ import {
   isEmailVerified,
   handleResendVerification,
   signInWithGoogle,
+  secretCodeGeneration,
+  codeVerification,
 } from "../authentication/auth.js";
 
 const router = express.Router();
@@ -24,6 +26,12 @@ router.post("/resendEmailVerification", handleResendVerification);
 
 //Route 5: Handling signIn ans signUp using Google
 router.get("/google/signin", signInWithGoogle);
+
+//Route 6: QRCODE generation for Google Authenticator
+router.post("/2fa/generate", secretCodeGeneration);
+
+//Route 7: Handling the Code Verification Google Authenticator
+router.post("/2fa/verify", codeVerification);
 
 // module.exports = router;
 export { router as authRoutes };
