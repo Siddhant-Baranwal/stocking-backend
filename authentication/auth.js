@@ -7,6 +7,10 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { TotpSecret } from "firebase/auth/web-extension";
+import speakeasy from "speakeasy";
+import qrcode from "qrcode";
 
 const handleEmailSignUp = async (req, res) => {
   const { email, password } = req.body;
@@ -101,10 +105,75 @@ const signInWithGoogle = async (req, res) => {
   }
 };
 
+const secretCodeGeneration = async (req, res) => {
+  try {
+    const userId = req.body.userId;
+
+    // Generate a new secret for TOTP
+    const secret = speakeasy.generateSecret({ name: "Stock-Insights" });
+
+    // Initialize Firestore
+    const firestore = getFirestore(app);
+
+    // Get the reference to the user's document in Firestore
+    const userRef = doc(firestore, "UsersDetail", userId);
+
+    // Fetch the user document
+    const usersnap = await getDoc(userRef);
+
+    if (usersnap.exists()) {
+      // Update the user document with the new TOTP secret, merging the data
+      await setDoc(userRef, { totpsecret: secret.base32 }, { merge: true });
+
+      // Generate OTP auth URL and QR code
+      const otpauth_url = secret.otpauth_url;
+      const qrCode = await qrcode.toDataURL(otpauth_url);
+
+      // Respond with the QR code for the client to display
+      res.json({ qrCode });
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const codeVerification = async (req, res) => {
+  try {
+    const { userId, token } = req.body;
+    const firestore = getFirestore(app);
+
+    const userRef = doc(firestore, "UsersDetail", userId);
+    const usersnap = await getDoc(userRef);
+    const secret = usersnap.data().totpsecret;
+
+    // console.log(secret);
+
+    const verified = speakeasy.totp.verify({
+      secret: secret,
+      encoding: "base32",
+      token: token,
+      window: 1, // Allows some margin for time drift
+    });
+
+    if (verified) {
+      res.json({ verified: true });
+    } else {
+      res.json({ verified: false, message: "Invalid token" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export {
   handleEmailSignUp,
   handleEmailSignIn,
   isEmailVerified,
   handleResendVerification,
   signInWithGoogle,
+  secretCodeGeneration,
+  codeVerification,
 };
