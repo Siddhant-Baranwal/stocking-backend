@@ -6,53 +6,72 @@ import {
   writeBatch,
   getDoc,
   getFirestore,
+  addDoc,
+  getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 
 const firestore = getFirestore(app);
 
-// Upload data to Firestore.
+// Function to upload data to Firestore
 const uploadDataToFirestore = async (data) => {
+  const collectionRef = collection(firestore, "UsersDetail");
   const batch = writeBatch(firestore);
-  const { email } = data;
-  const docRef = doc(firestore, "UsersDetail", email);
-  batch.set(docRef, data);
+
+  data.forEach((item) => {
+    const docRef = doc(collectionRef);
+    batch.set(docRef, item);
+  });
+
   try {
     await batch.commit();
-    console.log('Data uploaded successfully');
+    console.log("Data uploaded successfully!");
   } catch (error) {
-    console.log('Error uploading the data', error);
+    console.error("Error uploading data to Firestore:", error);
   }
 };
 
-// Save cookie.
-const saveCookie = async (req, res) => {
-  const { email } = req.body;
+const addUser = async (req, res) => {
+  const { name, email } = req.body;
   const history = [];
-  const data = { email, history };
-  
-  const userDocRef = doc(firestore, "UsersDetail", email);
-
+  const data = { name, email, history };
   try {
-    const userDoc = await getDoc(userDocRef);
+    // Check if a user with the given email already exists in Firestore
+    const userQuery = query(
+      collection(firestore, "UsersDetail"),
+      where("email", "==", email)
+    );
+    const querySnapshot = await getDocs(userQuery);
 
-    if (userDoc.exists()) {
-      res
-        .status(200)
-        .cookie("token", email, {
-          httpOnly: true,
-          maxAge: 15 * 24 * 60 * 60 * 1000,
-        })
-        .send("User already exists, cookie set!");
-    } else {
-      await uploadDataToFirestore(data);
-      res
-        .status(200)
-        .cookie("token", email, {
-          httpOnly: true,
-          maxAge: 15 * 24 * 60 * 60 * 1000,
-        })
-        .send("User added successfully!");
+    if (!querySnapshot.empty) {
+      // User already exists
+      const existingUserDoc = querySnapshot.docs[0]; // Get the first matched document
+      const existingUserData = existingUserDoc.data(); // Get the user data
+      const userId = existingUserDoc.id; // Get the document ID (userId)
+
+      return res.status(200).json({
+        message: "User already exists.",
+        user: { userId, ...existingUserData }, // Include the userId in the response
+      });
     }
+
+    // If the user doesn't exist, create a new user
+    const userRef = await addDoc(collection(firestore, "UsersDetail"), data);
+    const userId = userRef.id; // Firestore auto-generates the document ID
+
+    const newUser = { userId, ...data }; // Add userId to user data
+
+    res
+      .status(200)
+      .cookie("token", email, {
+        httpOnly: true,
+        maxAge: 15 * 24 * 60 * 60 * 1000,
+      })
+      .json({
+        message: "User added successfully!",
+        user: newUser, // Return the newly created user data
+      });
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal server error.");
@@ -110,4 +129,4 @@ const getHistory = async (req, res) => {
   }
 };
 
-export { saveCookie, updateHistory, getHistory };
+export { addUser, updateHistory, getHistory };
