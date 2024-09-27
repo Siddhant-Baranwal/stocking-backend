@@ -29,14 +29,14 @@ const uploadDataToFirestore = async (data) => {
 };
 
 const addUser = async (req, res) => {
-  const { name, uid, email } = req.body;
+  const { name, email } = req.body;
   const history = [];
-  const data = { name, email, uid, history };
+  const data = { name, email, history };
   try {
     await uploadDataToFirestore([data]);
     res
       .status(200)
-      .cookie("token", uid, {
+      .cookie("token", email, {
         httpOnly: true,
         maxAge: 15 * 24 * 60 * 60 * 1000,
       })
@@ -49,14 +49,14 @@ const addUser = async (req, res) => {
 
 // History of user
 const updateHistory = async (req, res) => {
-  const uid = req.cookies.token;
+  const email = req.cookies.token;
   const { newEntry } = req.body;
 
-  if (!uid) {
+  if (!email) {
     return res.status(401).send("Unauthorized: No token provided");
   }
 
-  const docRef = doc(firestore, "UsersDetail", uid);
+  const docRef = doc(firestore, "UsersDetail", email);
 
   try {
     const userDoc = await getDoc(docRef);
@@ -76,13 +76,13 @@ const updateHistory = async (req, res) => {
 };
 
 const getHistory = async (req, res) => {
-  const uid = req.cookies.token;
+  const email = req.cookies.token;
 
-  if (!uid) {
+  if (!email) {
     return res.status(401).send("Unauthorized: No token provided");
   }
 
-  const docRef = doc(firestore, "UsersDetail", uid);
+  const docRef = doc(firestore, "UsersDetail", email);
 
   try {
     const userDoc = await getDoc(docRef);
