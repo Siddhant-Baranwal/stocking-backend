@@ -1,11 +1,11 @@
 // Define routes for user and history.
 import express from 'express';
-import { addUser, getHistory, updateHistory } from '../controllers/user.js';
+import { getHistory, saveCookie, updateHistory } from '../controllers/user.js';
 
 const router = express.Router();
 
 // Route to add new user.
-router.post("/add", addUser);
+router.post("/saveCookie", saveCookie);
 
 // Route to get history of the saved user.
 router.get('/getHistory', getHistory);

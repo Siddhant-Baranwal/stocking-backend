@@ -10,37 +10,49 @@ import {
 
 const firestore = getFirestore(app);
 
-// Function to upload data to Firestore
+// Upload data to Firestore.
 const uploadDataToFirestore = async (data) => {
-  const collectionRef = collection(firestore, "UsersDetail");
   const batch = writeBatch(firestore);
-
-  data.forEach((item) => {
-    const docRef = doc(collectionRef);
-    batch.set(docRef, item);
-  });
-
+  const { email } = data;
+  const docRef = doc(firestore, "UsersDetail", email);
+  batch.set(docRef, data);
   try {
     await batch.commit();
-    console.log("Data uploaded successfully!");
+    console.log('Data uploaded successfully');
   } catch (error) {
-    console.error("Error uploading data to Firestore:", error);
+    console.log('Error uploading the data', error);
   }
 };
 
-const addUser = async (req, res) => {
-  const { name, email } = req.body;
+// Save cookie.
+const saveCookie = async (req, res) => {
+  const { email } = req.body;
   const history = [];
-  const data = { name, email, history };
+  const data = { email, history };
+  
+  const userDocRef = doc(firestore, "UsersDetail", email);
+
   try {
-    await uploadDataToFirestore([data]);
-    res
-      .status(200)
-      .cookie("token", email, {
-        httpOnly: true,
-        maxAge: 15 * 24 * 60 * 60 * 1000,
-      })
-      .send("User added successfully!");
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+      res
+        .status(200)
+        .cookie("token", email, {
+          httpOnly: true,
+          maxAge: 15 * 24 * 60 * 60 * 1000,
+        })
+        .send("User already exists, cookie set!");
+    } else {
+      await uploadDataToFirestore(data);
+      res
+        .status(200)
+        .cookie("token", email, {
+          httpOnly: true,
+          maxAge: 15 * 24 * 60 * 60 * 1000,
+        })
+        .send("User added successfully!");
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send("Internal server error.");
@@ -98,4 +110,4 @@ const getHistory = async (req, res) => {
   }
 };
 
-export { addUser, updateHistory, getHistory };
+export { saveCookie, updateHistory, getHistory };
