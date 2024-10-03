@@ -34,6 +34,7 @@ const uploadDataToFirestore = async (data) => {
 
 const addUser = async (req, res) => {
   const { name, email } = req.body;
+  console.log(req.body);
   const history = [];
   const data = { name, email, history };
   try {
@@ -80,8 +81,8 @@ const addUser = async (req, res) => {
 
 // History of user
 const updateHistory = async (req, res) => {
-  const email = req.cookies.token;
-  const { newEntry } = req.body;
+  const { email,newEntry } = req.body;
+  console.log(req.body);
 
   if (!email) {
     return res.status(401).send("Unauthorized: No token provided");
@@ -91,6 +92,7 @@ const updateHistory = async (req, res) => {
 
   try {
     const userDoc = await getDoc(docRef);
+    console.log(userDoc)
     if (userDoc.exists()) {
       const currentHistory = userDoc.data().history || [];
       currentHistory.push(newEntry);

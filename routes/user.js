@@ -11,6 +11,6 @@ router.post("/add", addUser);
 router.get('/getHistory', getHistory);
 
 // Route to update the history of the saved user.
-router.get('/updateHistory', updateHistory);
+router.post('/updateHistory', updateHistory);
 
 export { router as userRoutes };
