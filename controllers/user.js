@@ -3,7 +3,6 @@ import {
   collection,
   doc,
   setDoc,
-  writeBatch,
   getDoc,
   getFirestore,
   addDoc,
@@ -14,27 +13,8 @@ import {
 
 const firestore = getFirestore(app);
 
-// Function to upload data to Firestore
-const uploadDataToFirestore = async (data) => {
-  const collectionRef = collection(firestore, "UsersDetail");
-  const batch = writeBatch(firestore);
-
-  data.forEach((item) => {
-    const docRef = doc(collectionRef);
-    batch.set(docRef, item);
-  });
-
-  try {
-    await batch.commit();
-    console.log("Data uploaded successfully!");
-  } catch (error) {
-    console.error("Error uploading data to Firestore:", error);
-  }
-};
-
 const addUser = async (req, res) => {
   const { name, email } = req.body;
-  console.log(req.body);
   const history = [];
   const data = { name, email, history };
   try {
@@ -74,39 +54,50 @@ const addUser = async (req, res) => {
         user: newUser, // Return the newly created user data
       });
   } catch (error) {
-    console.log(error);
     res.status(500).send("Internal server error.");
   }
 };
 
 // History of user
 const updateHistory = async (req, res) => {
-  const { email,newEntry } = req.body;
-  console.log(req.body);
+  const { email, newEntry } = req.body;
 
   if (!email) {
-    return res.status(401).send("Unauthorized: No token provided");
+    return res.status(401).send("Unauthorized: No email provided");
   }
 
-  const docRef = doc(firestore, "UsersDetail", email);
-
   try {
-    const userDoc = await getDoc(docRef);
-    console.log(userDoc)
-    if (userDoc.exists()) {
+    // Create a query to find the user document by email
+    const userQuery = query(
+      collection(firestore, "UsersDetail"),
+      where("email", "==", email)
+    );
+
+    const querySnapshot = await getDocs(userQuery);
+
+    if (!querySnapshot.empty) {
+      // Get the first document from the query snapshot
+      const userDoc = querySnapshot.docs[0];
+
+      // Get the current history from the user document
       const currentHistory = userDoc.data().history || [];
+
+      // Add the new entry to the history array
       currentHistory.push(newEntry);
 
+      // Update the document with the new history
+      const docRef = doc(firestore, "UsersDetail", userDoc.id); // Use the doc ID to reference the document
       await setDoc(docRef, { history: currentHistory }, { merge: true });
-      res.status(200).send("History updated successfully!");
+      const updatedUserDoc = await getDoc(docRef);
+      res.status(200).send(updatedUserDoc)
     } else {
       res.status(404).send("User not found");
     }
   } catch (error) {
-    console.error("Error updating user history:", error);
     res.status(500).send("Internal Server Error");
   }
 };
+
 
 const getHistory = async (req, res) => {
   const email = req.cookies.token;
@@ -115,12 +106,19 @@ const getHistory = async (req, res) => {
     return res.status(401).send("Unauthorized: No token provided");
   }
 
-  const docRef = doc(firestore, "UsersDetail", email);
-
   try {
-    const userDoc = await getDoc(docRef);
-    if (userDoc.exists()) {
+    // Query the user by email (similar to updateHistory)
+    const userQuery = query(
+      collection(firestore, "UsersDetail"),
+      where("email", "==", email)
+    );
+    const querySnapshot = await getDocs(userQuery);
+
+    if (!querySnapshot.empty) {
+      // Get the user document
+      const userDoc = querySnapshot.docs[0];
       const history = userDoc.data().history || [];
+
       res.status(200).json(history);
     } else {
       res.status(404).send("User not found");
