@@ -13,6 +13,7 @@ const db = getFirestore(app);
 
 // Function to get companies corresponding to keyword in their name
 const getFilterdSearch = async (req, res) => {
+  console.log(req.query);
   try {
     // Extract the search string from the request query parameters
     const searchString = req.query.name;
@@ -41,6 +42,7 @@ const getFilterdSearch = async (req, res) => {
           id: doc.id,
           Name: companyData.Name,
           country: companyData.Country,
+          sl_no: companyData.SL_No,
         });
       }
     });
@@ -78,4 +80,29 @@ const getCompanyDetails = async (req, res) => {
   }
 };
 
-export { getFilterdSearch, getCompanyDetails };
+const getallCompanies = async (req, res) => {
+  try {
+    const companiesRef = collection(db, "Companies");
+    const querySnapshot = await getDocs(companiesRef);
+
+    if (querySnapshot.empty) {
+      return res.status(404).json({ message: "No companies found" });
+    }
+
+    const allCompanies = [];
+    querySnapshot.forEach((doc) => {
+      const companyData = doc.data();
+      allCompanies.push({
+        id: doc.id,
+        ...companyData, // Spread the entire company data object
+      });
+    });
+
+    return res.status(200).json({ companies: allCompanies });
+  } catch (error) {
+    console.error("Error fetching companies:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export { getFilterdSearch, getCompanyDetails, getallCompanies };
