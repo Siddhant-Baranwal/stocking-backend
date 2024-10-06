@@ -15,6 +15,7 @@ const firestore = getFirestore(app);
 
 const addUser = async (req, res) => {
   const { name, email } = req.body;
+  console.log(req.user);
   const history = [];
   const data = { name, email, history };
   try {
@@ -61,6 +62,7 @@ const addUser = async (req, res) => {
 // History of user
 const updateHistory = async (req, res) => {
   const { email, newEntry } = req.body;
+  console.log("hi", email);
 
   if (!email) {
     return res.status(401).send("Unauthorized: No email provided");
@@ -89,7 +91,7 @@ const updateHistory = async (req, res) => {
       const docRef = doc(firestore, "UsersDetail", userDoc.id); // Use the doc ID to reference the document
       await setDoc(docRef, { history: currentHistory }, { merge: true });
       const updatedUserDoc = await getDoc(docRef);
-      res.status(200).send(updatedUserDoc)
+      res.status(200).send(updatedUserDoc.data());
     } else {
       res.status(404).send("User not found");
     }
@@ -97,7 +99,6 @@ const updateHistory = async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
 
 const getHistory = async (req, res) => {
   const email = req.cookies.token;
